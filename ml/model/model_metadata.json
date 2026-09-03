@@ -1,0 +1,42 @@
+{
+  "model_name": "Random Forest",
+  "classes": [
+    "Battery/Electrical",
+    "Cooling System",
+    "Engine Mechanical",
+    "Fuel System",
+    "Normal"
+  ],
+  "raw_feature_cols": [
+    "rpm",
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load"
+  ],
+  "engineered_feature_cols": [
+    "rpm",
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load",
+    "thermal_stress",
+    "power_demand",
+    "voltage_fuel_ratio",
+    "temp_load_interaction",
+    "rpm_load_discrepancy"
+  ],
+  "selected_features": [
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load",
+    "thermal_stress",
+    "voltage_fuel_ratio",
+    "temp_load_interaction",
+    "rpm_load_discrepancy"
+  ],
+  "test_accuracy": 0.9875,
+  "test_f1_score": 0.987517825602926,
+  "version": "1.0.0"
+}

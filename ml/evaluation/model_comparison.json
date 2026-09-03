@@ -1,0 +1,55 @@
+{
+  "champion_model": "Random Forest",
+  "classes": [
+    "Battery/Electrical",
+    "Cooling System",
+    "Engine Mechanical",
+    "Fuel System",
+    "Normal"
+  ],
+  "raw_features": [
+    "rpm",
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load"
+  ],
+  "engineered_features": [
+    "rpm",
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load",
+    "thermal_stress",
+    "power_demand",
+    "voltage_fuel_ratio",
+    "temp_load_interaction",
+    "rpm_load_discrepancy"
+  ],
+  "selected_features": [
+    "engine_temperature",
+    "battery_voltage",
+    "fuel_pressure",
+    "engine_load",
+    "thermal_stress",
+    "voltage_fuel_ratio",
+    "temp_load_interaction",
+    "rpm_load_discrepancy"
+  ],
+  "models": {
+    "Random Forest": {
+      "accuracy": 0.9875,
+      "precision_macro": 0.9875876110028157,
+      "recall_macro": 0.9875,
+      "f1_macro": 0.987517825602926,
+      "f1_weighted": 0.9875178256029259
+    },
+    "XGBoost": {
+      "accuracy": 0.9875,
+      "precision_macro": 0.98755326362449,
+      "recall_macro": 0.9875,
+      "f1_macro": 0.9875137626548881,
+      "f1_weighted": 0.9875137626548881
+    }
+  }
+}
