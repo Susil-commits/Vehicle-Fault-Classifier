@@ -43,13 +43,25 @@ export default function ResultCard({ result, loading }) {
       </div>
 
       <div className="predicted-fault-display">
-        <div className="predicted-title-label">Possible Fault:</div>
+        <div className="predicted-title-label">Predicted Subsystem Fault:</div>
         <div className="predicted-fault-name" id="predicted-fault-label">
           {result.predicted_fault}
         </div>
-        <div className="fault-dtc-code">
-          <span>DTC: {result.diagnostic_code}</span>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+          <div className="fault-dtc-code">
+            <span>DTC: {result.diagnostic_code}</span>
+          </div>
+          {result.sae_definition && (
+            <div className="fault-dtc-code" style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'var(--text-secondary)' }}>
+              <span>{result.sae_definition}</span>
+            </div>
+          )}
         </div>
+        {result.subsystem && (
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+            Subsystem: {result.subsystem}
+          </div>
+        )}
       </div>
 
       {/* Animated Confidence Box */}

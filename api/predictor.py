@@ -58,6 +58,14 @@ class VehicleFaultPredictor:
         with open(encoder_file, "rb") as f:
             self.label_encoder = pickle.load(f)
 
+        # Load Fault Catalog extracted directly from dataset ground truth
+        catalog_file = self.model_dir / "fault_catalog.json"
+        if catalog_file.exists():
+            with open(catalog_file, "r") as f:
+                self.fault_catalog = json.load(f)
+        else:
+            self.fault_catalog = {}
+
         if meta_file.exists():
             with open(meta_file, "r") as f:
                 self.metadata = json.load(f)
@@ -77,6 +85,7 @@ class VehicleFaultPredictor:
         """
         Runs the end-to-end inference pipeline on raw telemetry input.
         Returns predicted fault, confidence score, all probabilities, DTC code, and recommendation.
+        All diagnostic metadata is sourced dynamically from the dataset's fault catalog.
         """
         raw_cols = ["rpm", "engine_temperature", "battery_voltage", "fuel_pressure", "engine_load"]
         df_input = pd.DataFrame([telemetry], columns=raw_cols)
@@ -104,41 +113,15 @@ class VehicleFaultPredictor:
         predicted_fault = str(classes[best_idx])
         confidence = float(probabilities[best_idx])
 
-        # Domain Diagnostics & Recommendations
-        dtc_map = {
-            "Normal": {
-                "code": "P0000",
-                "severity": "Normal",
-                "recommendation": "Vehicle telemetry is within nominal operating range. No active DTCs or system faults detected.",
-            },
-            "Cooling System": {
-                "code": "P0217",
-                "severity": "Critical",
-                "recommendation": "Engine coolant temperature critically elevated (>105°C). Inspect radiator cooling fan operation, thermostat actuation, coolant fluid level, and check for cylinder head gasket leakage.",
-            },
-            "Battery/Electrical": {
-                "code": "P0562",
-                "severity": "Warning",
-                "recommendation": "Abnormal charging system voltage detected (<12.0V or >15.5V). Test alternator diode ripple, evaluate battery internal resistance, check drive belt tension, and inspect terminal corrosion.",
-            },
-            "Fuel System": {
-                "code": "P0087",
-                "severity": "Warning",
-                "recommendation": "Fuel rail pressure out of specification (<28 psi or rich lockup). Inspect fuel delivery pump flow rate, fuel filter clogging, fuel rail pressure sensor, and injector spray pattern.",
-            },
-            "Engine Mechanical": {
-                "code": "P0300",
-                "severity": "Critical",
-                "recommendation": "Abnormal load-to-RPM disparity detected, indicating cylinder misfire or mechanical drag. Inspect ignition coil packs, spark plug fouling, cylinder compression balance, and intake vacuum leaks.",
-            },
-        }
-
-        diag_info = dtc_map.get(
+        # Data-driven Ground-Truth Lookup from Dataset Fault Catalog
+        diag_info = self.fault_catalog.get(
             predicted_fault,
             {
-                "code": "P0999",
+                "dtc_code": "P0999",
+                "sae_definition": "Unspecified System Anomaly",
+                "subsystem": "Powertrain - Diagnostic Scan Required",
                 "severity": "Caution",
-                "recommendation": "General anomaly detected. Run full OBD-II scan diagnostic.",
+                "standard_procedure": "Execute generic OBD-II Mode 03 DTC scan diagnostic.",
             },
         )
 
@@ -147,8 +130,10 @@ class VehicleFaultPredictor:
             "confidence": round(confidence, 4),
             "confidence_percentage": round(confidence * 100, 1),
             "severity": diag_info["severity"],
-            "diagnostic_code": diag_info["code"],
-            "recommendation": diag_info["recommendation"],
+            "diagnostic_code": diag_info["dtc_code"],
+            "sae_definition": diag_info.get("sae_definition", ""),
+            "subsystem": diag_info.get("subsystem", ""),
+            "recommendation": diag_info["standard_procedure"],
             "probabilities": prob_dict,
             "telemetry_received": telemetry,
         }

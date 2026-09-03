@@ -51,6 +51,8 @@ class ClassificationOutput(BaseModel):
     confidence_percentage: float = Field(..., description="Confidence formatted as percentage (0-100)")
     severity: str = Field(..., description="Severity level: Normal, Caution, Warning, or Critical")
     diagnostic_code: str = Field(..., description="Mapped SAE / OBD-II Diagnostic Trouble Code")
+    sae_definition: Optional[str] = Field(None, description="Official SAE J2012 DTC Title")
+    subsystem: Optional[str] = Field(None, description="Automotive powertrain subsystem")
     recommendation: str = Field(..., description="Recommended diagnostic and technician inspection step")
     probabilities: Dict[str, float] = Field(..., description="Confidence distribution across all fault classes")
     telemetry_received: Dict[str, float] = Field(..., description="Echoed input telemetry")

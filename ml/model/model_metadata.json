@@ -38,5 +38,6 @@
   ],
   "test_accuracy": 0.9875,
   "test_f1_score": 0.987517825602926,
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)"
 }

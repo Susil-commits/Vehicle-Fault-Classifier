@@ -99,6 +99,20 @@ def run_training(
         if count > 0:
             print(f"    - {col}: {count} missing values ({count/len(df)*100:.2f}%)")
 
+    # Extract Ground-Truth Fault Catalog directly from dataset metadata columns
+    print("\n  Extracting ground-truth SAE J2012 fault catalog from dataset...")
+    fault_catalog = {}
+    for fault in df["fault_type"].unique():
+        sample = df[df["fault_type"] == fault].iloc[0]
+        fault_catalog[fault] = {
+            "dtc_code": str(sample.get("dtc_code", "P0999")),
+            "sae_definition": str(sample.get("sae_definition", "Diagnostic Trouble Code")),
+            "subsystem": str(sample.get("subsystem", "Powertrain")),
+            "severity": str(sample.get("severity", "Warning")),
+            "standard_procedure": str(sample.get("standard_procedure", "Execute standard OBD-II diagnostic protocol.")),
+        }
+    print(f"  Catalog extracted for {len(fault_catalog)} classes.")
+
     raw_feature_cols = ["rpm", "engine_temperature", "battery_voltage", "fuel_pressure", "engine_load"]
     X_raw = df[raw_feature_cols].copy()
     y_raw = df["fault_type"].copy()
@@ -326,9 +340,14 @@ def run_training(
         "test_accuracy": results[best_model_name]["accuracy"],
         "test_f1_score": results[best_model_name]["f1_macro"],
         "version": "1.0.0",
+        "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)",
     }
     with open(model_path / "model_metadata.json", "w") as f:
         json.dump(model_metadata, f, indent=2)
+
+    # Save Ground-Truth Fault Catalog extracted directly from dataset
+    with open(model_path / "fault_catalog.json", "w") as f:
+        json.dump(fault_catalog, f, indent=2)
 
     print(f"\nArtifacts successfully exported:")
     print(f"  - {model_path / 'best_model.pkl'}")
@@ -337,6 +356,7 @@ def run_training(
     print(f"  - {model_path / 'feature_selector.pkl'}")
     print(f"  - {model_path / 'label_encoder.pkl'}")
     print(f"  - {model_path / 'model_metadata.json'}")
+    print(f"  - {model_path / 'fault_catalog.json'}")
     print(f"  - {eval_path / 'confusion_matrix.png'}")
     print(f"  - {eval_path / 'feature_importance.png'}")
     print("\n Training Pipeline Complete!")

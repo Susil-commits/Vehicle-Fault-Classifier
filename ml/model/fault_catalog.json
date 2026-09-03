@@ -1,0 +1,37 @@
+{
+  "Normal": {
+    "dtc_code": "P0000",
+    "sae_definition": "Nominal Operation - No Diagnostic Trouble Code Detected",
+    "subsystem": "Powertrain - All Subsystems Nominal",
+    "severity": "Normal",
+    "standard_procedure": "Vehicle operating within certified SAE J1979 parameters. No technician intervention required."
+  },
+  "Battery/Electrical": {
+    "dtc_code": "P0562",
+    "sae_definition": "System Voltage Low / Charging Circuit Failure",
+    "subsystem": "Powertrain - Electrical & Alternator System",
+    "severity": "Warning",
+    "standard_procedure": "Execute SAE J2012 charging system test: test alternator output under load, measure battery cold cranking amps (CCA) and internal resistance, check drive belt tension, and inspect chassis ground loops."
+  },
+  "Fuel System": {
+    "dtc_code": "P0087",
+    "sae_definition": "Fuel Rail / System Pressure Too Low",
+    "subsystem": "Powertrain - Fuel Delivery & Rail Hydraulics",
+    "severity": "Warning",
+    "standard_procedure": "Execute SAE J2012 fuel delivery diagnostic: test low-pressure in-tank fuel pump delivery rate, inspect fuel filter for particulate clogging, verify high-pressure rail relief valve, and inspect injector spray patterns."
+  },
+  "Engine Mechanical": {
+    "dtc_code": "P0300",
+    "sae_definition": "Random / Multiple Cylinder Misfire Detected",
+    "subsystem": "Powertrain - Cylinder Compression & Ignition Mechanical",
+    "severity": "Critical",
+    "standard_procedure": "Execute SAE J2012 misfire diagnostic procedure: inspect ignition coil pack waveform, inspect spark plug electrode gap and carbon fouling, perform cylinder compression test, and check for intake manifold vacuum leaks."
+  },
+  "Cooling System": {
+    "dtc_code": "P0217",
+    "sae_definition": "Engine Coolant Overtemperature Condition",
+    "subsystem": "Powertrain - Thermal Management & Cooling",
+    "severity": "Critical",
+    "standard_procedure": "Execute SAE J2012 cooling diagnostic tree: inspect thermostat opening valve, verify radiator cooling fan relay activation, inspect water pump flow, and pressure-test cooling circuit for head gasket breach."
+  }
+}
