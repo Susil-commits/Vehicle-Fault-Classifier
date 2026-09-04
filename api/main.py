@@ -48,11 +48,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for frontend UI (Vite dev server on port 5173 or any port)
+# Enable CORS for frontend UI (allow_credentials=False complies with W3C CORS spec when using allow_origins=["*"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -143,7 +143,11 @@ def get_diagnostic_history(limit: int = 20, db: Session = Depends(get_db)):
 
 @app.delete("/history", tags=["Diagnostics"])
 def clear_diagnostic_history(db: Session = Depends(get_db)):
-    """Clears all stored diagnostic logs in the database."""
+    """
+    Clears all stored diagnostic logs in the database.
+    Note: Unauthenticated for local demo and test agility; enterprise production
+    deployments should protect this endpoint with API Key or OAuth2 / JWT authentication.
+    """
     try:
         count = db.query(VehicleDiagnosticLog).delete()
         db.commit()

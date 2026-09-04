@@ -109,3 +109,35 @@ npm install
 npm run dev
 ```
 Open **`http://localhost:5173`** in your browser.
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description | Auth Status |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | API, ML model, and Supabase database connectivity status | Public |
+| `POST` | `/classify` | Classifies 5-parameter OBD-II telemetry, resolves DTC & procedure, logs to DB | Public |
+| `GET` | `/history` | Retrieves recent persisted diagnostic scans from Supabase PostgreSQL | Public |
+| `DELETE` | `/history` | Clears stored diagnostic logs from database | Unauthenticated *(Demo limitation)* |
+| `GET` | `/samples` | Curated diagnostic scenario presets for 1-click live testing | Public |
+| `GET` | `/model-info` | Returns model architecture, CV metrics, and selected feature list | Public |
+| `GET` | `/confusion-matrix` | Serves the generated multi-class confusion matrix heatmap image | Public |
+
+---
+
+## Known Limitations & Production Roadmap
+
+This system is engineered as an automotive diagnostic demonstration and reference architecture. The following architectural trade-offs and production roadmap items are recognized:
+
+1. **Authentication & Authorization (Zero-Trust API)**:
+   - **Current State**: The `DELETE /history` endpoint (which wipes recorded diagnostic logs) is currently unauthenticated to facilitate immediate local developer testing, automated test execution, and interactive interview demonstrations.
+   - **Production Roadmap**: Introduce API Key or OAuth2 / JWT bearer token authentication with role-based access control (RBAC), restricting destructive operations (`DELETE /history`) to authorized diagnostic technicians and fleet management service accounts.
+
+2. **CORS Policy & Origin Isolation**:
+   - The API is configured with `allow_origins=["*"]` and `allow_credentials=False`, strictly adhering to W3C CORS specifications (disallowing wildcard origins when credentials are enabled). In enterprise production deployments, `allow_origins` would be locked down to explicitly whitelisted telemetry portal domains.
+
+3. **Telemetry Realism & CAN-Bus Validation**:
+   - **Current State**: The primary dataset is synthetically generated via `data/generate_dataset.py` from deterministic SAE J1979/J2012 physical operating boundaries and Bosch Automotive Handbook thresholds. While ideal for validating ML pipeline correctness, it represents clean, idealized sensor readings.
+   - **Production Roadmap**: Real-world in-vehicle deployments encounter multi-ECU CAN-bus arbitration jitter, noisy sensor drift, and intermittent bus packet drops. The reserved `data/raw/EngineFaultDB_Final.csv` benchmark and live OBD-II vehicle logging benches serve as the next phase for out-of-distribution robustness evaluation.
+

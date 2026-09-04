@@ -88,3 +88,28 @@ def test_samples_endpoint():
     assert response.status_code == 200
     samples = response.json()
     assert len(samples) >= 5
+
+
+def test_cors_preflight_headers():
+    """Verify CORS preflight headers comply with W3C specification (wildcard without credentials)."""
+    response = client.options(
+        "/classify",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "*"
+    assert response.headers.get("access-control-allow-credentials") is None
+
+
+def test_delete_history():
+    """Verify history reset via DELETE /history endpoint."""
+    response = client.delete("/history")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "cleared"
+    assert "deleted_count" in data
+
