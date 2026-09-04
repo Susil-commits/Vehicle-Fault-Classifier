@@ -39,5 +39,7 @@ jobs:
         env:
           PYTHONPATH: .
           VFC_API_KEY: vfc-admin-secret-key
+          DATABASE_URL: sqlite:///./vfc_history.db
         run: |
           pytest api/test_api.py -v
+

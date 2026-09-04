@@ -43,6 +43,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Ensure tables exist upon module load (for test clients and environments where lifespan context is not entered)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"[DB ERROR] Module-level table creation error: {e}")
+
+
+
 app = FastAPI(
     title="Vehicle Fault Classifier API",
     description="OBD-II Telemetry Multiclass Fault Diagnosis API with Supabase PostgreSQL Persistence",

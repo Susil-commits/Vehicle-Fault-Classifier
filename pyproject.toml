@@ -4,5 +4,7 @@ testpaths = ["api"]
 addopts = "-v"
 filterwarnings = [
     "ignore::DeprecationWarning",
-    "ignore::starlette.testclient.StarletteDeprecationWarning"
+    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+    "ignore:Using .httpx. with .starlette.testclient.*:DeprecationWarning",
 ]
+

@@ -3,10 +3,25 @@ Unit & Integration Tests for Vehicle Fault Classifier API
 Tests health, schema validation, fault inference, and model metrics.
 """
 
+import pytest
 from fastapi.testclient import TestClient
+
+from api.database import Base, engine
+from api.models import VehicleDiagnosticLog
 from api.main import app
 
+# Ensure database tables exist for integration tests (especially in SQLite CI environments)
+Base.metadata.create_all(bind=engine)
+
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def setup_test_db():
+    """Ensure database schema is created for test execution."""
+    Base.metadata.create_all(bind=engine)
+    yield
+
 
 
 def test_health_endpoint():
@@ -122,6 +137,14 @@ def test_delete_history_auth_enforcement():
     data = valid_response.json()
     assert data["status"] == "cleared"
     assert "deleted_count" in data
+
+
+def test_history_endpoint():
+    """Verify GET /history retrieves diagnostic records without error."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
 
 
 def test_model_info_endpoint():
