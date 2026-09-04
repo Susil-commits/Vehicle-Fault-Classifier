@@ -67,6 +67,8 @@ The training pipeline ([ml/train.py](file:///c:/Users/nayak/OneDrive/Desktop/VFC
 ### Dataset & Evaluation Context
 The dataset (`data/raw/vehicle_fault_dataset.csv`, 12,000 records) is synthetically generated via `data/generate_dataset.py` using physical operating envelopes and threshold triggers from SAE J1979 and the Bosch Automotive Handbook. Because ground-truth labels are derived from deterministic physical boundary conditions, these metrics reflect pipeline correctness in isolating known failure signatures. Further development focuses on testing against raw, noisy CAN-bus logs and sensor degradation.
 
+> **Note**: `data/raw/EngineFaultDB_Final.csv` is reserved for future cross-dataset validation and out-of-distribution benchmark testing.
+
 ---
 
 ## Tech Stack
