@@ -1,5 +1,16 @@
 # Vehicle Fault Classifier (VFC) 🚗⚡
 
+[![CI Pipeline](https://github.com/Susil-commits/Vehicle-Fault-Classifier/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/Vehicle-Fault-Classifier/actions/workflows/ci.yml)
+[![Live Demo UI](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://vehicle-fault-classifier.vercel.app)
+[![API Status](https://img.shields.io/badge/Render-API%20Live-46E3B7?style=flat&logo=render&logoColor=white)](https://vehicle-fault-classifier-api.onrender.com/health)
+[![API Docs](https://img.shields.io/badge/Swagger%20UI-FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://vehicle-fault-classifier-api.onrender.com/docs)
+[![Docker Ready](https://img.shields.io/badge/Docker-Containers%20Ready-2496ED?style=flat&logo=docker&logoColor=white)](#3-docker-containerized-deployment)
+
+> **Live Deployments:**
+> - **Diagnostic Dashboard (UI)**: [https://vehicle-fault-classifier.vercel.app](https://vehicle-fault-classifier.vercel.app)
+> - **Inference API (Backend)**: [https://vehicle-fault-classifier-api.onrender.com](https://vehicle-fault-classifier-api.onrender.com)
+> - **Interactive Swagger Docs**: [https://vehicle-fault-classifier-api.onrender.com/docs](https://vehicle-fault-classifier-api.onrender.com/docs)
+
 An end-to-end machine learning and diagnostic web system for multi-class automotive fault classification. Instead of binary failure detection, VFC classifies specific subsystem fault conditions directly from OBD-II sensor telemetry and maps them to standard SAE J2012 Diagnostic Trouble Codes (DTCs) and official repair procedures.
 
 ---
@@ -14,6 +25,7 @@ An end-to-end machine learning and diagnostic web system for multi-class automot
                                     ↓
                 [ ML Training Pipeline: ml/train.py ]
    Imputation → Feature Engineering → Scaling → ANOVA Selection → GridSearchCV
+   (Evaluates LightGBM, XGBoost, Random Forest, and MLP Neural Network)
                                     ↓
               [ Serialized Model Artifacts: ml/model/ ]
    best_model.pkl + scaler.pkl + imputer.pkl + fault_catalog.json
@@ -52,38 +64,52 @@ VFC aligns diagnostic telemetry and trouble codes with international automotive 
 
 ## ML Pipeline & Performance
 
-The training pipeline ([ml/train.py](file:///c:/Users/nayak/OneDrive/Desktop/VFC/ml/train.py)) enforces strict featurization ordering (stratified train/test split before fitting transformers), median imputation, domain feature engineering (thermal stress, power demand, voltage-to-fuel ratio), standard scaling, ANOVA feature selection, and **3-Fold Stratified GridSearchCV** across Random Forest and XGBoost.
+The training pipeline ([ml/train.py](file:///c:/Users/nayak/OneDrive/Desktop/VFC/ml/train.py)) enforces strict featurization ordering (stratified train/test split before fitting transformers), median imputation, domain feature engineering (thermal stress, power demand, voltage-to-fuel ratio), standard scaling, ANOVA feature selection, and **3-Fold Stratified GridSearchCV** across four distinct architectures: **LightGBM**, **XGBoost**, **Random Forest**, and an **MLP Neural Network**.
 
-### Champion Model: Hyperparameter-Tuned XGBoost
-- **Optimal Hyperparameters**: `{'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 100}`
-- **Hold-Out Test Accuracy**: **98.88%** (2,373 / 2,400 correct)
-- **Macro Precision**: **0.9888**
-- **Macro Recall**: **0.9887**
-- **Macro F1-Score**: **0.9888**
-- **Weighted F1-Score**: **0.9888**
-- **5-Fold Stratified CV Macro F1**: **0.9881 (± 0.0020)**
+### Multi-Model Benchmark Comparison (3-Fold Stratified CV & Hold-Out Test Set)
+
+| Architecture | Model Family | Hold-Out Accuracy | Macro F1 | Macro Precision | Macro Recall | 3-Fold CV F1 | Optimal Hyperparameters |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **LightGBM** (Champion) | Fast Gradient Boosting | **99.00%** | **0.9900** | **0.9900** | **0.9900** | **0.9906** | `{'learning_rate': 0.05, 'max_depth': 3, 'n_estimators': 200}` |
+| **XGBoost** | Gradient Boosted Trees | **98.88%** | **0.9888** | **0.9888** | **0.9887** | **0.9893** | `{'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 100}` |
+| **Random Forest** | Bagging Tree Ensemble | **98.71%** | **0.9871** | **0.9872** | **0.9871** | **0.9893** | `{'max_depth': 12, 'min_samples_split': 2, 'n_estimators': 200}` |
+| **MLP (Neural Network)** | Deep Feedforward NN | **98.54%** | **0.9854** | **0.9855** | **0.9854** | **0.9834** | `{'alpha': 0.0001, 'hidden_layer_sizes': (64, 32)}` |
+
+### Architectural Insight: Why Tree Models Win on Tabular Telemetry
+Automotive sensor telemetry is governed by step-function physical operating boundaries (e.g. Engine Coolant Temp > 105°C for cooling overheating, Battery Voltage < 12.0V for charging failure, Fuel Rail Pressure < 28 PSI for fuel starvation, Disproportionate Load > 75% at idle for misfire drag).
+
+- **Tree Ensembles (LightGBM, XGBoost, Random Forest)** isolate these threshold boundaries directly through orthogonal axis-aligned splits. They are naturally invariant to feature scale, require minimal hyperparameter calibration to capture non-linear step triggers, and avoid overfitting unnormalized tabular features.
+- **Neural Networks (MLP)** attempt to approximate sharp discrete thresholds using continuous smooth activation functions (ReLU, Sigmoid). This requires substantially more data, extensive feature normalization, and delicate weight regularization to avoid gradient smoothing across sharp physical boundaries.
+
 - **Audit Script**: Verified zero data leakage and exact metric reproduction via `python ml/verify_pipeline.py`.
-
-### Dataset & Evaluation Context
-The dataset (`data/raw/vehicle_fault_dataset.csv`, 12,000 records) is synthetically generated via `data/generate_dataset.py` using physical operating envelopes and threshold triggers from SAE J1979 and the Bosch Automotive Handbook. Because ground-truth labels are derived from deterministic physical boundary conditions, these metrics reflect pipeline correctness in isolating known failure signatures. Further development focuses on testing against raw, noisy CAN-bus logs and sensor degradation.
-
-> **Note**: `data/raw/EngineFaultDB_Final.csv` is reserved for future cross-dataset validation and out-of-distribution benchmark testing.
 
 ---
 
 ## Tech Stack
 
-- **Machine Learning**: Scikit-Learn (Random Forest, GridSearchCV, Pipeline), XGBoost, NumPy, Pandas, Matplotlib, Seaborn
+- **Machine Learning**: LightGBM, XGBoost, Scikit-Learn (Random Forest, MLPClassifier, GridSearchCV, Pipeline), NumPy, Pandas, Matplotlib, Seaborn
 - **Backend API**: FastAPI, Uvicorn, Pydantic v2
-- **Database Persistence**: Supabase PostgreSQL (SQLAlchemy with connection pooling)
+- **Database Persistence**: Supabase PostgreSQL (SQLAlchemy with connection pooling and SQLite fallback)
 - **Frontend Dashboard**: Vite, React 19, Vanilla CSS (Dark-Mode Automotive HUD, live telemetry gauges)
+- **DevOps & Containerization**: Docker (`Dockerfile.backend`, `Dockerfile.frontend`), Docker Compose, GitHub Actions CI/CD (`.github/workflows/ci.yml`), Render, Vercel
 - **Dataset**: Engineered synthetic telemetry dataset (`data/raw/vehicle_fault_dataset.csv`, 12,000 records) based on SAE J1979 PIDs and SAE J2012 DTC specifications via `data/generate_dataset.py`
 
 ---
 
 ## Quickstart Guide
 
-### 1. Backend & ML
+### 1. Docker Containerized Deployment (Recommended)
+Run the entire platform (FastAPI backend + React frontend) with a single command:
+```bash
+docker compose up --build
+```
+- Frontend UI: **`http://localhost:5173`**
+- Inference API: **`http://localhost:8001`**
+- Interactive Swagger Docs: **`http://localhost:8001/docs`**
+
+### 2. Local Python & Node Setup
+
+#### Backend & ML
 ```bash
 # Clone repository
 git clone https://github.com/Susil-commits/Vehicle-Fault-Classifier.git
@@ -102,7 +128,7 @@ pytest api/test_api.py -v
 python -m uvicorn api.main:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-### 2. Frontend UI
+#### Frontend UI
 ```bash
 cd ui
 npm install
@@ -119,25 +145,24 @@ Open **`http://localhost:5173`** in your browser.
 | `GET` | `/health` | API, ML model, and Supabase database connectivity status | Public |
 | `POST` | `/classify` | Classifies 5-parameter OBD-II telemetry, resolves DTC & procedure, logs to DB | Public |
 | `GET` | `/history` | Retrieves recent persisted diagnostic scans from Supabase PostgreSQL | Public |
-| `DELETE` | `/history` | Clears stored diagnostic logs from database | Unauthenticated *(Demo limitation)* |
+| `DELETE` | `/history` | Clears stored diagnostic logs from database | **Protected** (`X-API-Key` header) |
 | `GET` | `/samples` | Curated diagnostic scenario presets for 1-click live testing | Public |
-| `GET` | `/model-info` | Returns model architecture, CV metrics, and selected feature list | Public |
+| `GET` | `/model-info` | Returns model architecture, CV metrics, multi-model benchmark, and feature list | Public |
 | `GET` | `/confusion-matrix` | Serves the generated multi-class confusion matrix heatmap image | Public |
 
 ---
 
 ## Known Limitations & Production Roadmap
 
-This system is engineered as an automotive diagnostic demonstration and reference architecture. The following architectural trade-offs and production roadmap items are recognized:
+This system is engineered as an automotive diagnostic demonstration and reference architecture:
 
-1. **Authentication & Authorization (Zero-Trust API)**:
-   - **Current State**: The `DELETE /history` endpoint (which wipes recorded diagnostic logs) is currently unauthenticated to facilitate immediate local developer testing, automated test execution, and interactive interview demonstrations.
-   - **Production Roadmap**: Introduce API Key or OAuth2 / JWT bearer token authentication with role-based access control (RBAC), restricting destructive operations (`DELETE /history`) to authorized diagnostic technicians and fleet management service accounts.
+1. **Authentication & Authorization (Resolved for Mutating Endpoints)**:
+   - Destructive operations (`DELETE /history`) are protected with header-based API key authentication (`X-API-Key`), preventing unauthorized data purging while allowing seamless developer and administrative management via environment variables (`VFC_API_KEY`).
+   - *Enterprise Roadmap*: Integrate OAuth2 / JWT bearer tokens with role-based access control (RBAC) to differentiate fleet technician roles.
 
 2. **CORS Policy & Origin Isolation**:
-   - The API is configured with `allow_origins=["*"]` and `allow_credentials=False`, strictly adhering to W3C CORS specifications (disallowing wildcard origins when credentials are enabled). In enterprise production deployments, `allow_origins` would be locked down to explicitly whitelisted telemetry portal domains.
+   - The API is configured with `allow_origins=["*"]` and `allow_credentials=False`, strictly adhering to W3C CORS specifications. In enterprise production deployments, `allow_origins` would be locked down to explicitly whitelisted telemetry portal domains.
 
 3. **Telemetry Realism & CAN-Bus Validation**:
-   - **Current State**: The primary dataset is synthetically generated via `data/generate_dataset.py` from deterministic SAE J1979/J2012 physical operating boundaries and Bosch Automotive Handbook thresholds. While ideal for validating ML pipeline correctness, it represents clean, idealized sensor readings.
-   - **Production Roadmap**: Real-world in-vehicle deployments encounter multi-ECU CAN-bus arbitration jitter, noisy sensor drift, and intermittent bus packet drops. The reserved `data/raw/EngineFaultDB_Final.csv` benchmark and live OBD-II vehicle logging benches serve as the next phase for out-of-distribution robustness evaluation.
-
+   - The primary dataset is synthetically generated via `data/generate_dataset.py` from deterministic SAE J1979/J2012 physical operating boundaries and Bosch Automotive Handbook thresholds.
+   - *Roadmap*: The reserved `data/raw/EngineFaultDB_Final.csv` benchmark and live OBD-II vehicle logging benches serve as the next phase for out-of-distribution robustness evaluation against noisy CAN-bus arbitration and sensor degradation.

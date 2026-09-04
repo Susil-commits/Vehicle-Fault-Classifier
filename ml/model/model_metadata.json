@@ -1,5 +1,5 @@
 {
-  "model_name": "XGBoost",
+  "model_name": "LightGBM",
   "classes": [
     "Battery/Electrical",
     "Cooling System",
@@ -36,14 +36,71 @@
     "temp_load_interaction",
     "rpm_load_discrepancy"
   ],
-  "test_accuracy": 0.98875,
-  "test_f1_score": 0.9887650904312176,
-  "cv_f1_score": 0.9892829647830812,
+  "test_accuracy": 0.99,
+  "test_f1_score": 0.9900059427426807,
+  "cv_f1_score": 0.9906362212310734,
   "best_hyperparameters": {
-    "learning_rate": 0.1,
-    "max_depth": 5,
-    "n_estimators": 100
+    "learning_rate": 0.05,
+    "max_depth": 3,
+    "n_estimators": 200
   },
   "version": "1.1.0",
-  "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)"
+  "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)",
+  "comparison": {
+    "Random Forest": {
+      "accuracy": 0.9870833333333333,
+      "precision_macro": 0.9871611662236054,
+      "recall_macro": 0.9870833333333333,
+      "f1_macro": 0.9871043388705196,
+      "f1_weighted": 0.9871043388705196,
+      "best_cv_score": 0.9892847178518647,
+      "best_params": {
+        "max_depth": 12,
+        "min_samples_split": 2,
+        "n_estimators": 200
+      }
+    },
+    "XGBoost": {
+      "accuracy": 0.98875,
+      "precision_macro": 0.9888033822418046,
+      "recall_macro": 0.9887499999999999,
+      "f1_macro": 0.9887650904312176,
+      "f1_weighted": 0.9887650904312175,
+      "best_cv_score": 0.9892829647830812,
+      "best_params": {
+        "learning_rate": 0.1,
+        "max_depth": 5,
+        "n_estimators": 100
+      }
+    },
+    "LightGBM": {
+      "accuracy": 0.99,
+      "precision_macro": 0.9900435050203507,
+      "recall_macro": 0.99,
+      "f1_macro": 0.9900059427426807,
+      "f1_weighted": 0.9900059427426807,
+      "best_cv_score": 0.9906362212310734,
+      "best_params": {
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "n_estimators": 200
+      }
+    },
+    "MLP (Neural Network)": {
+      "accuracy": 0.9854166666666667,
+      "precision_macro": 0.9854826891554911,
+      "recall_macro": 0.9854166666666666,
+      "f1_macro": 0.9854254432859145,
+      "f1_weighted": 0.9854254432859145,
+      "best_cv_score": 0.9834457880788001,
+      "best_params": {
+        "alpha": 0.0001,
+        "hidden_layer_sizes": [
+          64,
+          32
+        ]
+      }
+    }
+  },
+  "tabular_vs_neural_insight": "Tree models (XGBoost, LightGBM, Random Forest) outperform neural architectures (MLP) on tabular OBD-II telemetry because physical failure signatures are governed by orthogonal step-function threshold boundaries (e.g. ECT > 105\u00b0C, Voltage < 12.0V, Rail Pressure < 28 PSI). Tree partitions isolate these threshold boundaries directly, whereas MLPs require smooth sigmoid/ReLU hyperplanes and extensive regularization across unnormalized tabular feature interactions."
 }

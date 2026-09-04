@@ -3,7 +3,7 @@ Pydantic Schemas for Vehicle Fault Classifier API
 Defines input telemetry schema with realistic bounds and output diagnostic results.
 """
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -76,6 +76,8 @@ class ModelInfoResponse(BaseModel):
     raw_features: List[str]
     engineered_features: List[str]
     selected_features: List[str]
+    comparison: Optional[Dict[str, Any]] = None
+    comparison_insight: Optional[str] = None
 
 
 class PresetSample(BaseModel):

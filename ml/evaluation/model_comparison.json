@@ -1,5 +1,5 @@
 {
-  "champion_model": "XGBoost",
+  "champion_model": "LightGBM",
   "classes": [
     "Battery/Electrical",
     "Cooling System",
@@ -36,6 +36,7 @@
     "temp_load_interaction",
     "rpm_load_discrepancy"
   ],
+  "tabular_vs_neural_insight": "Tree models (XGBoost, LightGBM, Random Forest) outperform neural architectures (MLP) on tabular OBD-II telemetry because physical failure signatures are governed by orthogonal step-function threshold boundaries (e.g. ECT > 105\u00b0C, Voltage < 12.0V, Rail Pressure < 28 PSI). Tree partitions isolate these threshold boundaries directly, whereas MLPs require smooth sigmoid/ReLU hyperplanes and extensive regularization across unnormalized tabular feature interactions.",
   "models": {
     "Random Forest": {
       "accuracy": 0.9870833333333333,
@@ -61,6 +62,34 @@
         "learning_rate": 0.1,
         "max_depth": 5,
         "n_estimators": 100
+      }
+    },
+    "LightGBM": {
+      "accuracy": 0.99,
+      "precision_macro": 0.9900435050203507,
+      "recall_macro": 0.99,
+      "f1_macro": 0.9900059427426807,
+      "f1_weighted": 0.9900059427426807,
+      "best_cv_score": 0.9906362212310734,
+      "best_params": {
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "n_estimators": 200
+      }
+    },
+    "MLP (Neural Network)": {
+      "accuracy": 0.9854166666666667,
+      "precision_macro": 0.9854826891554911,
+      "recall_macro": 0.9854166666666666,
+      "f1_macro": 0.9854254432859145,
+      "f1_weighted": 0.9854254432859145,
+      "best_cv_score": 0.9834457880788001,
+      "best_params": {
+        "alpha": 0.0001,
+        "hidden_layer_sizes": [
+          64,
+          32
+        ]
       }
     }
   }

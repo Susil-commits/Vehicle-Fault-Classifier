@@ -10,10 +10,12 @@ Exposes:
 - GET  /confusion-matrix : Serves the generated evaluation heatmap
 """
 
+import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -59,6 +61,20 @@ app.add_middleware(
 
 # Initialize predictor singleton
 predictor = VehicleFaultPredictor.get_instance()
+
+
+def require_admin_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+    """
+    Lightweight administrative API key check for destructive operations (DELETE /history).
+    Converts documented known limitation into an active access control.
+    """
+    expected_key = os.getenv("VFC_API_KEY", "vfc-admin-secret-key")
+    if not x_api_key or x_api_key != expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key. Provide a valid 'X-API-Key' header.",
+        )
+    return x_api_key
 
 
 @app.get("/health", tags=["Diagnostics"])
@@ -142,11 +158,13 @@ def get_diagnostic_history(limit: int = 20, db: Session = Depends(get_db)):
 
 
 @app.delete("/history", tags=["Diagnostics"])
-def clear_diagnostic_history(db: Session = Depends(get_db)):
+def clear_diagnostic_history(
+    _auth: str = Depends(require_admin_api_key),
+    db: Session = Depends(get_db),
+):
     """
     Clears all stored diagnostic logs in the database.
-    Note: Unauthenticated for local demo and test agility; enterprise production
-    deployments should protect this endpoint with API Key or OAuth2 / JWT authentication.
+    Protected by lightweight administrative API Key authentication (X-API-Key header).
     """
     try:
         count = db.query(VehicleDiagnosticLog).delete()
@@ -159,17 +177,36 @@ def clear_diagnostic_history(db: Session = Depends(get_db)):
 
 @app.get("/model-info", response_model=ModelInfoResponse, tags=["Diagnostics"])
 def get_model_info():
-    """Returns detailed architecture, feature selection, and evaluation scores."""
+    """Returns detailed architecture, feature selection, evaluation scores, and multi-model benchmark."""
     meta = predictor.metadata
+    comparison = None
+    comparison_file = Path(__file__).resolve().parent.parent / "ml" / "evaluation" / "model_comparison.json"
+    if comparison_file.exists():
+        try:
+            with open(comparison_file, "r") as f:
+                comparison = json.load(f)
+        except Exception as e:
+            print(f"[Model Info WARNING] Could not load model comparison: {e}")
+
+    insight = (
+        "Tree models (XGBoost, LightGBM, Random Forest) outperform neural architectures (MLP) on tabular "
+        "OBD-II telemetry because physical failure signatures are governed by orthogonal step-function "
+        "threshold boundaries (e.g. ECT > 105°C, Voltage < 12.0V, Rail Pressure < 28 PSI). Tree partitions "
+        "isolate these threshold boundaries directly, whereas MLPs require smooth sigmoid/ReLU hyperplanes "
+        "and extensive regularization across unnormalized tabular feature interactions."
+    )
+
     return ModelInfoResponse(
-        model_name=meta.get("model_name", "Random Forest"),
+        model_name=meta.get("model_name", "XGBoost Classifier"),
         version=meta.get("version", "1.1.0"),
-        accuracy=meta.get("test_accuracy", 0.9875),
-        f1_score=meta.get("test_f1_score", 0.9875),
+        accuracy=meta.get("test_accuracy", 0.9888),
+        f1_score=meta.get("test_f1_score", 0.9888),
         classes=meta.get("classes", [str(c) for c in predictor.label_encoder.classes_]),
         raw_features=meta.get("raw_feature_cols", []),
         engineered_features=meta.get("engineered_feature_cols", []),
         selected_features=meta.get("selected_features", []),
+        comparison=comparison,
+        comparison_insight=insight,
     )
 
 

@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: vfc-api
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./vfc_history.db}
+      - VFC_API_KEY=${VFC_API_KEY:-vfc-admin-secret-key}
+    volumes:
+      - vfc_data:/app/data
+    restart: unless-stopped
+    networks:
+      - vfc-network
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: vfc-ui
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - vfc-network
+
+networks:
+  vfc-network:
+    driver: bridge
+
+volumes:
+  vfc_data:

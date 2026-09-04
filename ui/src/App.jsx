@@ -126,7 +126,13 @@ export default function App() {
 
   const handleClearHistory = async () => {
     try {
-      const res = await fetch('/api/history', { method: 'DELETE' });
+      const apiKey = import.meta.env.VITE_API_KEY || 'vfc-admin-secret-key';
+      const res = await fetch('/api/history', {
+        method: 'DELETE',
+        headers: {
+          'X-API-Key': apiKey,
+        },
+      });
       if (res.ok) {
         setHistory([]);
       }

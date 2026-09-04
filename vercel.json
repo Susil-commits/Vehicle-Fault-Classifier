@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd ui && npm run build",
+  "outputDirectory": "ui/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://vehicle-fault-classifier-api.onrender.com/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

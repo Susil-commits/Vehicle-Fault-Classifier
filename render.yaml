@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vehicle-fault-classifier-api
+    runtime: docker
+    dockerfilePath: Dockerfile.backend
+    region: oregon
+    plan: free
+    branch: main
+    envVars:
+      - key: PORT
+        value: 8001
+      - key: DATABASE_URL
+        sync: false
+      - key: VFC_API_KEY
+        generateValue: true

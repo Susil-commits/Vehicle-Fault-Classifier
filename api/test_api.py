@@ -105,11 +105,33 @@ def test_cors_preflight_headers():
     assert response.headers.get("access-control-allow-credentials") is None
 
 
-def test_delete_history():
-    """Verify history reset via DELETE /history endpoint."""
-    response = client.delete("/history")
-    assert response.status_code == 200
-    data = response.json()
+def test_delete_history_auth_enforcement():
+    """Verify DELETE /history requires valid X-API-Key header."""
+    # 1. Unauthenticated request should return 401 Unauthorized
+    unauth_response = client.delete("/history")
+    assert unauth_response.status_code == 401
+    assert "Invalid or missing API key" in unauth_response.json()["detail"]
+
+    # 2. Invalid key should return 401 Unauthorized
+    invalid_response = client.delete("/history", headers={"X-API-Key": "wrong-secret-key"})
+    assert invalid_response.status_code == 401
+
+    # 3. Valid key should succeed with 200 OK
+    valid_response = client.delete("/history", headers={"X-API-Key": "vfc-admin-secret-key"})
+    assert valid_response.status_code == 200
+    data = valid_response.json()
     assert data["status"] == "cleared"
     assert "deleted_count" in data
+
+
+def test_model_info_endpoint():
+    """Verify /model-info returns architecture, metrics, and multi-model benchmark."""
+    response = client.get("/model-info")
+    assert response.status_code == 200
+    data = response.json()
+    assert "model_name" in data
+    assert "accuracy" in data
+    assert data["accuracy"] > 0.95
+    assert "classes" in data
+    assert "selected_features" in data
 

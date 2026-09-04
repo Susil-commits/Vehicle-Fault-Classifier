@@ -795,3 +795,59 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Benchmark Comparison Table */
+.benchmark-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.35);
+  margin-bottom: 24px;
+}
+
+.benchmark-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.benchmark-table th {
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.benchmark-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+
+.benchmark-table tr.champion-row {
+  background: rgba(0, 229, 255, 0.06);
+}
+
+.benchmark-table tr.champion-row td {
+  color: #fff;
+  font-weight: 600;
+}
+
+.champion-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--accent-cyan);
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  margin-left: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
