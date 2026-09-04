@@ -1,5 +1,5 @@
 {
-  "model_name": "Random Forest",
+  "model_name": "XGBoost",
   "classes": [
     "Battery/Electrical",
     "Cooling System",
@@ -36,8 +36,14 @@
     "temp_load_interaction",
     "rpm_load_discrepancy"
   ],
-  "test_accuracy": 0.9875,
-  "test_f1_score": 0.987517825602926,
-  "version": "1.0.0",
+  "test_accuracy": 0.98875,
+  "test_f1_score": 0.9887650904312176,
+  "cv_f1_score": 0.9892829647830812,
+  "best_hyperparameters": {
+    "learning_rate": 0.1,
+    "max_depth": 5,
+    "n_estimators": 100
+  },
+  "version": "1.1.0",
   "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)"
 }

@@ -34,7 +34,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from xgboost import XGBClassifier
 
@@ -164,21 +164,30 @@ def run_training(
     selected_features = [col for col, sel in zip(engineered_feature_cols, selected_mask) if sel]
     print(f"  Selected Features ({len(selected_features)}): {selected_features}")
 
-    # 5. Model Training & Comparison
-    print("\n[5/7] Training Models: Random Forest vs XGBoost...")
-    models = {
+    # 5. Model Training & Comparison with Hyperparameter Tuning (GridSearchCV)
+    print("\n[5/7] Training Models with GridSearchCV: Random Forest vs XGBoost...")
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=random_state)
+
+    param_grids = {
+        "Random Forest": {
+            "n_estimators": [100, 200],
+            "max_depth": [8, 12, None],
+            "min_samples_split": [2, 4],
+        },
+        "XGBoost": {
+            "n_estimators": [100, 200],
+            "max_depth": [3, 5],
+            "learning_rate": [0.05, 0.1],
+        },
+    }
+
+    base_estimators = {
         "Random Forest": RandomForestClassifier(
-            n_estimators=200,
-            max_depth=12,
-            min_samples_split=4,
             class_weight="balanced",
             random_state=random_state,
             n_jobs=-1,
         ),
         "XGBoost": XGBClassifier(
-            n_estimators=200,
-            max_depth=5,
-            learning_rate=0.08,
             subsample=0.85,
             colsample_bytree=0.85,
             eval_metric="mlogloss",
@@ -190,10 +199,27 @@ def run_training(
     results = {}
     fitted_models = {}
 
-    for name, model in models.items():
-        print(f"  --> Training {name}...")
-        model.fit(X_train_selected, y_train)
-        y_pred = model.predict(X_test_selected)
+    for name in ["Random Forest", "XGBoost"]:
+        print(f"\n  --> Running GridSearchCV for {name} (3-Fold CV, scoring='f1_macro')...")
+        grid_search = GridSearchCV(
+            estimator=base_estimators[name],
+            param_grid=param_grids[name],
+            scoring="f1_macro",
+            cv=cv,
+            n_jobs=-1,
+            verbose=1,
+        )
+        grid_search.fit(X_train_selected, y_train)
+
+        best_estimator = grid_search.best_estimator_
+        best_params = grid_search.best_params_
+        best_cv_score = grid_search.best_score_
+
+        print(f"      Optimal Parameters:     {best_params}")
+        print(f"      Best 3-Fold CV Macro F1: {best_cv_score:.4f}")
+
+        # Evaluate best estimator on hold-out test set
+        y_pred = best_estimator.predict(X_test_selected)
 
         acc = accuracy_score(y_test, y_pred)
         prec_macro = precision_score(y_test, y_pred, average="macro", zero_division=0)
@@ -207,13 +233,15 @@ def run_training(
             "recall_macro": float(rec_macro),
             "f1_macro": float(f1_macro),
             "f1_weighted": float(f1_weighted),
+            "best_params": best_params,
+            "best_cv_score": float(best_cv_score),
             "predictions": y_pred.tolist(),
         }
-        fitted_models[name] = model
+        fitted_models[name] = best_estimator
 
-        print(f"      Accuracy:    {acc * 100:.2f}%")
-        print(f"      Macro F1:    {f1_macro:.4f}")
-        print(f"      Weighted F1: {f1_weighted:.4f}")
+        print(f"      Hold-Out Test Accuracy:  {acc * 100:.2f}%")
+        print(f"      Hold-Out Macro F1:       {f1_macro:.4f}")
+        print(f"      Hold-Out Weighted F1:    {f1_weighted:.4f}")
 
     # Pick the champion model
     best_model_name = max(results.keys(), key=lambda k: results[k]["f1_macro"])
@@ -306,6 +334,8 @@ def run_training(
                 "recall_macro": results[name]["recall_macro"],
                 "f1_macro": results[name]["f1_macro"],
                 "f1_weighted": results[name]["f1_weighted"],
+                "best_cv_score": results[name]["best_cv_score"],
+                "best_params": results[name]["best_params"],
             }
             for name in results
         },
@@ -339,7 +369,9 @@ def run_training(
         "selected_features": selected_features,
         "test_accuracy": results[best_model_name]["accuracy"],
         "test_f1_score": results[best_model_name]["f1_macro"],
-        "version": "1.0.0",
+        "cv_f1_score": results[best_model_name]["best_cv_score"],
+        "best_hyperparameters": results[best_model_name]["best_params"],
+        "version": "1.1.0",
         "domain_specification": "SAE J1979 OBD-II PIDs & SAE J2012 DTCs (Bosch Automotive Handbook 10th Ed.)",
     }
     with open(model_path / "model_metadata.json", "w") as f:

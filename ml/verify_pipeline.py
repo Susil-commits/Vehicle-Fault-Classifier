@@ -2,11 +2,12 @@
 ML Claims Verification & Leakage Audit Script
 Validates:
 1. Strict Featurization Ordering & Zero Data Leakage
-2. Exact Test Performance Reproduction (98.75% Accuracy & 0.9875 Macro F1)
+2. Exact Test Performance Reproduction against Trained Model Metadata (98.88% Accuracy & 0.9888 Macro F1)
 3. 5-Fold Cross Validation Stability on Training Set
 4. Detailed Confusion Matrix & Misclassification Error Breakdown
 """
 
+import json
 import pickle
 import sys
 from pathlib import Path
@@ -125,19 +126,32 @@ def run_verification():
     f1_macro = f1_score(y_test, y_pred, average="macro")
     f1_weighted = f1_score(y_test, y_pred, average="weighted")
 
+    # Load claimed metrics from model_metadata.json
+    metadata_file = model_dir / "model_metadata.json"
+    if metadata_file.exists():
+        with open(metadata_file, "r") as f:
+            metadata = json.load(f)
+        claimed_acc = metadata.get("test_accuracy", 0.9888)
+        claimed_f1 = metadata.get("test_f1_score", 0.9888)
+        claimed_model_name = metadata.get("model_name", "Trained Model")
+    else:
+        claimed_acc = 0.9888
+        claimed_f1 = 0.9888
+        claimed_model_name = "Trained Model"
+
     print("\n" + "-" * 60)
-    print("  METRIC VERIFICATION TABLE")
+    print(f"  METRIC VERIFICATION TABLE ({claimed_model_name})")
     print("-" * 60)
-    print(f"  Test Accuracy:        {acc * 100:.2f}%  (Claimed: 98.75%)")
-    print(f"  Macro Precision:      {prec_macro:.4f}  (Claimed: 0.9876)")
-    print(f"  Macro Recall:         {rec_macro:.4f}  (Claimed: 0.9875)")
-    print(f"  Macro F1-Score:       {f1_macro:.4f}  (Claimed: 0.9875)")
-    print(f"  Weighted F1-Score:    {f1_weighted:.4f}  (Claimed: 0.9875)")
+    print(f"  Test Accuracy:        {acc * 100:.2f}%  (Claimed: {claimed_acc * 100:.2f}%)")
+    print(f"  Macro Precision:      {prec_macro:.4f}")
+    print(f"  Macro Recall:         {rec_macro:.4f}")
+    print(f"  Macro F1-Score:       {f1_macro:.4f}  (Claimed: {claimed_f1:.4f})")
+    print(f"  Weighted F1-Score:    {f1_weighted:.4f}")
     print("-" * 60)
 
     # Assert exact replication of claims
-    assert round(acc, 4) == 0.9875, f"Accuracy discrepancy: {acc} vs 0.9875"
-    assert round(f1_macro, 4) == 0.9875, f"Macro F1 discrepancy: {f1_macro} vs 0.9875"
+    assert round(acc, 4) == round(claimed_acc, 4), f"Accuracy discrepancy: {acc} vs {claimed_acc}"
+    assert round(f1_macro, 4) == round(claimed_f1, 4), f"Macro F1 discrepancy: {f1_macro} vs {claimed_f1}"
     print("  [VERIFIED] Exact claims confirmed on hold-out test set!")
 
     # 5. Per-Class Precision, Recall, F1 Breakdown
